@@ -20,17 +20,17 @@ export const PipelineStepper: React.FC<PipelineStepperProps> = ({ steps }) => {
   return (
     <div className="pipeline-container my-8">
       {/* Header bar */}
-      <div className="flex items-center justify-between mb-4 px-1">
+      <div className="flex items-center justify-between mb-8 px-1">
         <div className="flex items-center gap-2">
           <span className="status-indicator"></span>
           <span className="pipeline-header-title">Live Extraction Pipeline</span>
         </div>
-        <span className="pipeline-header-subtitle">Zero-Ad Direct Stream</span>
+
       </div>
 
       {/* Steps Track */}
       <div className="pipeline-track">
-        {STEP_DEFINITIONS.map((def) => {
+        {STEP_DEFINITIONS.map((def, index) => {
           const stepData = steps[def.id] || { status: 'idle', label: def.fallbackLabel };
           const Icon = def.icon;
           const isRunning = stepData.status === 'running';
@@ -40,44 +40,35 @@ export const PipelineStepper: React.FC<PipelineStepperProps> = ({ steps }) => {
           return (
             <div 
               key={def.id} 
-              className={`pipeline-step ${isRunning ? 'is-running' : ''} ${isDone ? 'is-done' : ''} ${isIdle ? 'is-idle' : ''}`}
+              className={`step-container ${isRunning ? 'is-running' : ''} ${isDone ? 'is-done' : ''} ${isIdle ? 'is-idle' : ''}`}
             >
-              {/* Top status bar */}
-              <div className="flex items-center justify-between mb-3">
-                <div className={`step-icon-badge ${isRunning ? 'text-primary' : isDone ? 'text-primary' : 'text-muted'}`}>
-                  <Icon size={15} />
+              {/* Connector to next step */}
+              {index < STEP_DEFINITIONS.length - 1 && (
+                <div className="step-connector">
+                  {isDone && <div className="connector-fill" />}
                 </div>
-                
-                <div>
-                  {isRunning && (
-                    <span className="state-badge state-running">
-                      <Loader2 size={11} className="animate-spin" />
-                      <span>Active</span>
-                    </span>
-                  )}
-                  {isDone && (
-                    <span className="state-badge state-done">
-                      <Check size={11} strokeWidth={3} />
-                      <span>Done</span>
-                    </span>
-                  )}
-                  {isIdle && (
-                    <span className="state-idle">{def.num}</span>
-                  )}
+              )}
+              
+              <div className="step-bubble-wrapper">
+                <div className="step-bubble">
+                  {isDone ? <Check size={18} strokeWidth={3} /> : <Icon size={18} />}
                 </div>
+                {isRunning && (
+                  <div className="step-pulse"></div>
+                )}
               </div>
 
-              {/* Step content */}
-              <div>
-                <div className="step-label">
-                  {stepData.label || def.fallbackLabel}
+              <div className="step-content">
+                <div className="step-label flex items-center gap-2">
+                  <span>{stepData.label || def.fallbackLabel}</span>
+                  {isRunning && (
+                    <Loader2 size={14} className="animate-spin text-primary" />
+                  )}
                 </div>
                 <div className="step-desc">
                   {def.desc}
                 </div>
               </div>
-
-              {isRunning && <div className="step-progress-line" />}
             </div>
           );
         })}
@@ -86,142 +77,201 @@ export const PipelineStepper: React.FC<PipelineStepperProps> = ({ steps }) => {
       <style jsx>{`
         .my-8 { margin-top: 32px; margin-bottom: 32px; }
         .px-1 { padding-left: 4px; padding-right: 4px; }
+        .mb-8 { margin-bottom: 32px; }
         
         .pipeline-container {
           background-color: var(--bg-card);
           border: 1px solid var(--border-subtle);
           border-radius: var(--radius-lg);
-          padding: 20px;
+          padding: 24px;
           box-shadow: var(--shadow-md);
         }
 
         .status-indicator {
-          width: 7px;
-          height: 7px;
+          width: 8px;
+          height: 8px;
           border-radius: 50%;
           background-color: var(--success);
-          box-shadow: 0 0 6px var(--success);
+          box-shadow: 0 0 8px var(--success);
           display: inline-block;
         }
 
         .pipeline-header-title {
-          font-size: 0.88rem;
+          font-size: 0.95rem;
           font-weight: 700;
           color: var(--text-primary);
           letter-spacing: -0.01em;
         }
 
         .pipeline-header-subtitle {
-          font-size: 0.75rem;
+          font-size: 0.8rem;
           color: var(--text-muted);
           font-family: var(--font-mono);
         }
 
         .pipeline-track {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-          gap: 12px;
-        }
-
-        .pipeline-step {
-          background-color: var(--bg-surface);
-          border: 1px solid var(--border-muted);
-          border-radius: var(--radius-md);
-          padding: 16px;
-          position: relative;
-          overflow: hidden;
           display: flex;
           flex-direction: column;
-          justify-content: space-between;
-          gap: 12px;
-          transition: all 0.2s ease;
+          gap: 32px;
+          position: relative;
+          padding: 10px 0;
         }
 
-        .pipeline-step.is-done {
-          border-color: var(--border-subtle);
-          background-color: var(--bg-surface);
+        .step-container {
+          display: flex;
+          flex-direction: row;
+          position: relative;
+          align-items: flex-start;
+          gap: 20px;
         }
 
-        .pipeline-step.is-running {
-          background-color: var(--bg-surface-hover);
-          border-color: var(--border-active);
-          box-shadow: 0 0 0 1px var(--border-active);
+        .step-connector {
+          position: absolute;
+          left: 19px; /* 38px bubble / 2 */
+          top: 38px;
+          height: calc(100% - 6px); /* 100% of container height minus bubble height plus gap (32px) = 100% - 38px + 32px = 100% - 6px */
+          width: 2px;
+          background-color: var(--border-muted);
+          z-index: 0;
         }
 
-        .pipeline-step.is-idle {
-          opacity: 0.6;
+        .connector-fill {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background-color: var(--success);
+          animation: fillLine 0.5s ease-out forwards;
         }
 
-        .step-icon-badge {
-          width: 30px;
-          height: 30px;
-          border-radius: 8px;
-          background-color: var(--bg-input);
-          border: 1px solid var(--border-subtle);
+        @keyframes fillLine {
+          from { height: 0; }
+          to { height: 100%; }
+        }
+
+        .step-bubble-wrapper {
+          position: relative;
+          z-index: 1;
           display: flex;
           align-items: center;
           justify-content: center;
+          width: 38px;
+          height: 38px;
+          flex-shrink: 0;
         }
 
-        .state-badge {
-          display: inline-flex;
+        .step-bubble {
+          width: 38px;
+          height: 38px;
+          border-radius: 50%;
+          background-color: var(--bg-surface);
+          border: 2px solid var(--border-muted);
+          display: flex;
           align-items: center;
-          gap: 4px;
-          font-size: 0.7rem;
-          font-weight: 700;
-          padding: 3px 8px;
-          border-radius: var(--radius-full);
-          letter-spacing: 0.02em;
-        }
-
-        .state-done {
-          color: var(--success);
-          background-color: rgba(53, 208, 127, 0.1);
-          border: 1px solid rgba(53, 208, 127, 0.25);
-        }
-
-        .state-running {
-          color: var(--text-primary);
-          background-color: rgba(241, 241, 240, 0.1);
-          border: 1px solid rgba(241, 241, 240, 0.25);
-        }
-
-        .state-idle {
-          font-size: 0.75rem;
-          font-weight: 600;
+          justify-content: center;
           color: var(--text-muted);
-          font-family: var(--font-mono);
+          transition: all 0.3s ease;
+          position: relative;
+          z-index: 2;
+        }
+
+        .step-container.is-running .step-bubble {
+          border-color: var(--primary);
+          color: var(--primary);
+          background-color: var(--bg-surface-hover);
+        }
+
+        .step-container.is-done .step-bubble {
+          background-color: var(--success);
+          border-color: var(--success);
+          color: #fff;
+        }
+
+        .step-pulse {
+          position: absolute;
+          top: -4px;
+          left: -4px;
+          right: -4px;
+          bottom: -4px;
+          border-radius: 50%;
+          border: 2px solid var(--primary);
+          animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+          opacity: 0.5;
+          z-index: 1;
+        }
+
+        @keyframes pulse {
+          0% { transform: scale(0.8); opacity: 0.8; }
+          100% { transform: scale(1.5); opacity: 0; }
+        }
+
+        .step-content {
+          display: flex;
+          flex-direction: column;
+          padding-top: 2px; /* adjust for vertical centering with bubble */
         }
 
         .step-label {
-          font-size: 0.88rem;
+          font-size: 0.95rem;
           font-weight: 700;
           color: var(--text-primary);
           margin-bottom: 4px;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
+        }
+
+        .step-container.is-idle .step-label {
+          color: var(--text-muted);
         }
 
         .step-desc {
-          font-size: 0.75rem;
+          font-size: 0.85rem;
           color: var(--text-secondary);
           line-height: 1.4;
         }
-
-        .step-progress-line {
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          right: 0;
-          height: 2px;
-          background: linear-gradient(90deg, transparent, var(--primary), transparent);
-          animation: sweep 1.5s infinite;
+        
+        .step-container.is-idle .step-desc {
+          opacity: 0.7;
         }
 
-        @keyframes sweep {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(100%); }
+        /* Desktop Layout */
+        @media (min-width: 768px) {
+          .pipeline-track {
+            flex-direction: row;
+            justify-content: space-between;
+            gap: 0;
+          }
+
+          .step-container {
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            flex: 1;
+            gap: 16px;
+          }
+
+          .step-connector {
+            left: 50%;
+            right: -50%;
+            top: 19px; /* center of 38px bubble */
+            height: 2px;
+            width: auto;
+          }
+
+          .connector-fill {
+            width: 100%;
+            height: 100%;
+            animation: fillLineHorizontal 0.5s ease-out forwards;
+          }
+
+          @keyframes fillLineHorizontal {
+            from { width: 0; }
+            to { width: 100%; }
+          }
+
+          .step-content {
+            padding-top: 0;
+            align-items: center;
+          }
         }
       `}</style>
     </div>

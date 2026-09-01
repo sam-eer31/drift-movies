@@ -7,7 +7,7 @@ import { LiveConsole } from '@/components/LiveConsole';
 import { DownloadCard } from '@/components/DownloadCard';
 import { MovieResultsGrid } from '@/components/MovieResultsGrid';
 import { PipelineStep, PipelineLog, MovieSearchResult, QualityOption, EpisodeOption, ResolveResponseData } from '@/types';
-import { Sparkles, Shield, Zap, RefreshCw, AlertCircle, Loader2, Tv, Film } from 'lucide-react';
+import { Shield, Zap, RefreshCw, AlertCircle, Loader2, Tv, Film } from 'lucide-react';
 
 export default function HomePage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -339,11 +339,6 @@ export default function HomePage() {
       <div className="container">
         {/* Hero Section */}
         <section className="text-center mb-10">
-          <div className="hero-badge">
-            <Sparkles size={14} />
-            <span>Movies & Web Series Direct S3 Stream Tunnel</span>
-          </div>
-
           <h1 className="heading-hero mb-4 mt-4">
             Any Movie. Any Series.<br />
             <span className="text-primary">Zero Ads.</span>

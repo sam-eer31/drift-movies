@@ -121,10 +121,7 @@ export const DownloadCard: React.FC<DownloadCardProps> = ({
           )}
         </div>
 
-        <div className="tunnel-badge">
-          <Zap size={14} />
-          <span>Cloudflare R2 S3 Tunnel</span>
-        </div>
+
       </div>
 
       {/* ================= MOVIE / SERIES TOP DETAILS & ACTION BUTTONS ================= */}
@@ -173,12 +170,7 @@ export const DownloadCard: React.FC<DownloadCardProps> = ({
               </span>
             )}
 
-            {fileName && (
-              <span className="meta-pill meta-filename" title={fileName}>
-                <Film size={13} />
-                <span>{fileName}</span>
-              </span>
-            )}
+
           </div>
 
           {/* Primary Action Buttons */}
@@ -515,7 +507,7 @@ export const DownloadCard: React.FC<DownloadCardProps> = ({
         /* Global scoped tweaks */
         .download-card-main {
           margin: 28px 0;
-          padding: 24px;
+          padding: 15px;
         }
 
         @media (min-width: 640px) {
@@ -740,8 +732,13 @@ export const DownloadCard: React.FC<DownloadCardProps> = ({
         .section-panel {
           background-color: var(--bg-surface);
           border-radius: var(--radius-lg);
-          padding: 24px;
+          padding: 12px;
           border: 1px solid var(--border-subtle);
+        }
+        @media (min-width: 640px) {
+          .section-panel {
+            padding: 24px;
+          }
         }
         .section-label {
           font-size: 0.82rem;
@@ -771,7 +768,7 @@ export const DownloadCard: React.FC<DownloadCardProps> = ({
         }
         .season-tab.active {
           background-color: var(--primary);
-          color: #FFF;
+          color: var(--bg-main);
           border-color: var(--primary);
         }
 
@@ -844,16 +841,26 @@ export const DownloadCard: React.FC<DownloadCardProps> = ({
         .batch-grid {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-          gap: 12px;
+          gap: 8px;
+        }
+        @media (min-width: 640px) {
+          .batch-grid {
+            gap: 12px;
+          }
         }
         .batch-card {
           background-color: var(--bg-card);
           border: 1px solid var(--border-subtle);
           border-radius: var(--radius-md);
-          padding: 14px 16px;
+          padding: 8px 10px;
           text-align: left;
           cursor: pointer;
           transition: all 0.2s ease;
+        }
+        @media (min-width: 640px) {
+          .batch-card {
+            padding: 14px 16px;
+          }
         }
         .batch-card:hover:not(.active) {
           border-color: var(--border-muted);
@@ -901,19 +908,29 @@ export const DownloadCard: React.FC<DownloadCardProps> = ({
         .quality-grid {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-          gap: 12px;
+          gap: 8px;
+        }
+        @media (min-width: 640px) {
+          .quality-grid {
+            gap: 12px;
+          }
         }
         .quality-card {
           background-color: var(--bg-card);
           border: 1px solid var(--border-subtle);
           border-radius: var(--radius-md);
-          padding: 16px;
+          padding: 8px 10px;
           text-align: left;
           cursor: pointer;
           transition: all 0.2s ease;
           position: relative;
           display: flex;
           flex-direction: column;
+        }
+        @media (min-width: 640px) {
+          .quality-card {
+            padding: 16px;
+          }
         }
         .quality-card:hover:not(.active) {
           border-color: var(--border-muted);
@@ -965,9 +982,14 @@ export const DownloadCard: React.FC<DownloadCardProps> = ({
         .mirror-panel {
           background-color: var(--bg-surface);
           border-radius: var(--radius-md);
-          padding: 18px;
+          padding: 10px;
           border: 1px solid var(--border-subtle);
           transition: opacity 0.2s ease;
+        }
+        @media (min-width: 640px) {
+          .mirror-panel {
+            padding: 18px;
+          }
         }
         .mirror-row {
           display: flex;

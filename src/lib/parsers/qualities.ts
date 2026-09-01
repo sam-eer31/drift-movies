@@ -64,6 +64,7 @@ export async function getMovieQualities(
     const headingMatches = Array.from(lookback.matchAll(/<(?:h[2-6]|strong)\b[^>]*>([\s\S]*?)<\/(?:h[2-6]|strong)>/gi));
     const targetHeading = headingMatches.length > 0 ? headingMatches[headingMatches.length - 1][1] : lookback;
 
+    let cleanWithBraces = targetHeading.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
     let clean = targetHeading.replace(/<[^>]+>/g, ' ').replace(/\{[^}]+\}/g, ' ');
     clean = clean.replace(/\s+/g, ' ').trim();
 
@@ -91,23 +92,48 @@ export async function getMovieQualities(
     }
 
     // Size Detection
-    const sizeMatch = clean.match(/\[(\d+(?:\.\d+)?\s*(?:MB|GB)(?:\/E)?)\]/i) ||
+    const sizeMatch = cleanWithBraces.match(/\[(\d+(?:\.\d+)?\s*(?:MB|GB)(?:\/E)?)\]/i) ||
                       btnText.match(/\[(\d+(?:\.\d+)?\s*(?:MB|GB)(?:\/E)?)\]/i) ||
-                      clean.match(/(\d+(?:\.\d+)?\s*(?:MB|GB))/i);
+                      cleanWithBraces.match(/(\d+(?:\.\d+)?\s*(?:MB|GB))/i);
     const size = sizeMatch ? sizeMatch[1] : undefined;
 
-    // Format Detection
-    const formatMatches = Array.from(clean.matchAll(/\b(BluRay|WEB-DL|HDRip|WEBRip|HEVC|HRVC|x264|x265|60fps|60FPS|10bit|HDR|BDRip|Remux)\b/gi)).map(f => f[1]);
-    const format = Array.from(new Set(formatMatches)).join(' ');
+    // Format Detection (Dynamic Tag Extraction)
+    let format = '';
+    let stringWithoutSize = cleanWithBraces;
+    if (sizeMatch && sizeMatch[0]) {
+      stringWithoutSize = stringWithoutSize.replace(sizeMatch[0], '').trim();
+    }
+
+    let resMatch = stringWithoutSize.match(/\b(2160p|4k|uhd|1080p|720p|480p)\b/i);
+    if (resMatch) {
+      const beforeRes = stringWithoutSize.slice(0, resMatch.index);
+      const afterRes = stringWithoutSize.slice((resMatch.index || 0) + resMatch[0].length);
+      
+      let videoFormat = afterRes.replace(/[\{\}\[\]\(\)]/g, ' ').replace(/\s+/g, ' ').trim();
+      
+      const tags: string[] = [];
+      const tagRegex = /(?:\[([^\]]+)\]|\{([^}]+)\}|\((?!\d{4}\))([^)]+)\))/g;
+      let tagMatch;
+      while ((tagMatch = tagRegex.exec(beforeRes)) !== null) {
+        const tagContent = tagMatch[1] || tagMatch[2] || tagMatch[3];
+        if (tagContent) tags.push(tagContent.trim());
+      }
+      
+      const allTags = [...tags, videoFormat].filter(Boolean);
+      format = allTags.join(' • ');
+    } else {
+      const formatMatches = Array.from(cleanWithBraces.matchAll(/\b(BluRay|WEB-DL|HDRip|WEBRip|HEVC|HRVC|x264|x265|60fps|60FPS|10bit|HDR|BDRip|Remux|iMAX)\b/gi)).map(f => f[1]);
+      format = Array.from(new Set(formatMatches)).join(' ');
+    }
 
     const isPerEp = (size && size.toUpperCase().includes('/E')) || clean.toUpperCase().includes('/E') || /episode/i.test(btnText);
     const isExplicitBatch = /batch|zip|complete/i.test(btnText) || /full season/i.test(clean);
     const isEpisodePackage = isSeries ? (isPerEp && !isExplicitBatch) : false;
 
-    // Group buttons that share the same Season, Quality and Size under the same package key
+    // Group buttons that share the same Season, Quality, Format and Size under the same package key
     const groupKey = isSeries
-      ? (isEpisodePackage ? `${season}_${quality}_${size || 'ep'}` : `${season}_${quality}_${size || 'batch'}`)
-      : `${quality}_${size || 'single'}`;
+      ? (isEpisodePackage ? `${season}_${quality}_${format}_${size || 'ep'}` : `${season}_${quality}_${format}_${size || 'batch'}`)
+      : `${quality}_${format}_${size || 'single'}`;
 
     rawPackages.push({
       key: groupKey,

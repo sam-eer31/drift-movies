@@ -86,14 +86,14 @@ export const LiveConsole: React.FC<LiveConsoleProps> = ({ logs, onClearLogs }) =
 
             return (
               <div key={log.id} className="log-line">
-                <span className="log-timestamp text-muted">
-                  {log.timestamp}
-                </span>
-
-                <span className={`log-badge ${badgeClass}`}>
-                  {log.stage}
-                </span>
-
+                <div className="log-meta">
+                  <span className="log-timestamp text-muted">
+                    {log.timestamp}
+                  </span>
+                  <span className={`log-badge ${badgeClass}`}>
+                    {log.stage}
+                  </span>
+                </div>
                 <span className={`log-message ${logTypeClass}`}>
                   {log.message}
                 </span>
@@ -148,8 +148,32 @@ export const LiveConsole: React.FC<LiveConsoleProps> = ({ logs, onClearLogs }) =
         .log-line {
           display: flex;
           align-items: flex-start;
-          gap: 8px;
-          margin-bottom: 6px;
+          gap: 12px;
+          margin-bottom: 8px;
+        }
+
+        .log-meta {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          flex-shrink: 0;
+          width: 220px; /* Aligns all log messages into a neat column on desktop */
+        }
+
+        @media (max-width: 640px) {
+          .log-line {
+            flex-direction: column;
+            gap: 4px;
+            margin-bottom: 16px;
+          }
+          .log-meta {
+            width: auto;
+          }
+          .log-message {
+            padding-left: 10px;
+            border-left: 2px solid var(--border-subtle);
+            margin-top: 2px;
+          }
         }
 
         .log-timestamp {
@@ -159,7 +183,7 @@ export const LiveConsole: React.FC<LiveConsoleProps> = ({ logs, onClearLogs }) =
 
         .log-badge {
           font-size: 0.68rem;
-          padding: 1px 6px;
+          padding: 2px 8px;
           border-radius: 4px;
           font-weight: 600;
           flex-shrink: 0;
@@ -186,7 +210,10 @@ export const LiveConsole: React.FC<LiveConsoleProps> = ({ logs, onClearLogs }) =
         }
 
         .log-message {
-          word-break: break-all;
+          flex: 1;
+          min-width: 0;
+          word-break: break-word;
+          overflow-wrap: break-word;
         }
         
         .text-warning { color: var(--warning); }
