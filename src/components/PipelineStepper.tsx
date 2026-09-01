@@ -17,6 +17,27 @@ const STEP_DEFINITIONS = [
 ];
 
 export const PipelineStepper: React.FC<PipelineStepperProps> = ({ steps }) => {
+  const [activeVisualIndex, setActiveVisualIndex] = React.useState(0);
+
+  React.useEffect(() => {
+    let targetIndex = 0;
+    for (let i = 0; i < STEP_DEFINITIONS.length; i++) {
+      const s = steps[STEP_DEFINITIONS[i].id];
+      if (s && s.status !== 'idle') {
+        targetIndex = i;
+      }
+    }
+
+    if (targetIndex < activeVisualIndex) {
+      setActiveVisualIndex(targetIndex);
+    } else if (activeVisualIndex < targetIndex) {
+      const timer = setTimeout(() => {
+        setActiveVisualIndex(prev => prev + 1);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [steps, activeVisualIndex]);
+
   return (
     <div className="pipeline-container my-8">
       {/* Header bar */}
@@ -31,7 +52,14 @@ export const PipelineStepper: React.FC<PipelineStepperProps> = ({ steps }) => {
       {/* Steps Track */}
       <div className="pipeline-track">
         {STEP_DEFINITIONS.map((def, index) => {
-          const stepData = steps[def.id] || { status: 'idle', label: def.fallbackLabel };
+          let stepData = steps[def.id] || { status: 'idle', label: def.fallbackLabel };
+          
+          if (index < activeVisualIndex) {
+            stepData = { ...stepData, status: 'completed' };
+          } else if (index > activeVisualIndex) {
+            stepData = { ...stepData, status: 'idle' };
+          }
+
           const Icon = def.icon;
           const isRunning = stepData.status === 'running';
           const isDone = stepData.status === 'completed';

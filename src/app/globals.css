@@ -85,6 +85,12 @@ body {
   }
 }
 
+@media (max-width: 639px) {
+  .mobile-no-pl {
+    padding-left: 0 !important;
+  }
+}
+
 .panel {
   background: var(--bg-card);
   border: 1px solid var(--border-subtle);

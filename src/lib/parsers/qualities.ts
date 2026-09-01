@@ -188,14 +188,11 @@ export async function getMovieQualities(
     if (!isSeries) {
       label = `${pkg.quality}`;
       if (pkg.format) label += ` ${pkg.format}`;
-      if (pkg.size) label += ` [${pkg.size}]`;
     } else if (pkg.type === 'episode_list') {
       label = `${pkg.season} • ${pkg.quality}`;
       if (pkg.format) label += ` ${pkg.format}`;
-      if (pkg.size) label += ` [${pkg.size}]`;
     } else {
       label = `${pkg.season} • ${pkg.quality} Full Season Zip`;
-      if (pkg.size) label += ` [${pkg.size}]`;
     }
 
     qualityOptions.push({

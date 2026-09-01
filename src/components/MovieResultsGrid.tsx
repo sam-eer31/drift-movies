@@ -23,7 +23,7 @@ export const MovieResultsGrid: React.FC<MovieResultsGridProps> = ({
 
   return (
     <div className="my-8">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
         <h3 className="text-lg font-bold">
           Found {results.length} Movie Matches
         </h3>
@@ -162,7 +162,7 @@ export const MovieResultsGrid: React.FC<MovieResultsGridProps> = ({
 
         .badge-vega {
           background-color: rgba(234, 179, 8, 0.15); /* accent/amber */
-          color: var(--accent);
+          color: var(--warning);
           border: 1px solid rgba(234, 179, 8, 0.3);
         }
       `}</style>

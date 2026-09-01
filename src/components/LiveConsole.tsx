@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useRef, useEffect } from 'react';
-import { Terminal, Copy, Check, Trash2 } from 'lucide-react';
+import { Terminal, Copy, Check, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
 import { PipelineLog } from '@/types';
 
 interface LiveConsoleProps {
@@ -12,12 +12,14 @@ interface LiveConsoleProps {
 export const LiveConsole: React.FC<LiveConsoleProps> = ({ logs, onClearLogs }) => {
   const bottomRef = useRef<HTMLDivElement>(null);
   const [copied, setCopied] = React.useState(false);
+  const [isExpanded, setIsExpanded] = React.useState(false);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [logs]);
 
-  const handleCopyLogs = () => {
+  const handleCopyLogs = (e: React.MouseEvent) => {
+    e.stopPropagation();
     const text = logs.map(l => `[${l.timestamp}] [${l.stage}] ${l.message}`).join('\n');
     navigator.clipboard.writeText(text);
     setCopied(true);
@@ -27,16 +29,21 @@ export const LiveConsole: React.FC<LiveConsoleProps> = ({ logs, onClearLogs }) =
   return (
     <div className="terminal-container">
       {/* Console Top Bar */}
-      <div className="terminal-header flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex gap-1">
+      <div 
+        className="terminal-header flex items-center justify-between cursor-pointer" 
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <div className="flex items-center gap-3" style={{ minWidth: 0 }}>
+          <div className="flex gap-1" style={{ flexShrink: 0 }}>
             <span className="window-btn bg-error"></span>
             <span className="window-btn bg-warning"></span>
             <span className="window-btn bg-success"></span>
           </div>
-          <span className="terminal-title flex items-center gap-2 text-muted font-mono">
-            <Terminal size={14} className="text-primary" />
-            pipeline_stream.log
+          <span className="terminal-title flex items-center gap-2 text-muted font-mono" style={{ minWidth: 0 }}>
+            <Terminal size={14} className="text-primary" style={{ flexShrink: 0 }} />
+            <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0 }}>
+              pipeline_stream.log
+            </span>
           </span>
         </div>
 
@@ -44,65 +51,75 @@ export const LiveConsole: React.FC<LiveConsoleProps> = ({ logs, onClearLogs }) =
           <button
             type="button"
             onClick={handleCopyLogs}
-            className="btn-ghost"
+            className="btn-ghost btn-icon"
+            title="Copy logs"
           >
             {copied ? <Check size={14} className="text-success" /> : <Copy size={14} />}
-            <span>{copied ? 'Copied' : 'Copy'}</span>
           </button>
 
           {onClearLogs && (
             <button
               type="button"
-              onClick={onClearLogs}
-              className="btn-ghost"
+              onClick={(e) => {
+                e.stopPropagation();
+                onClearLogs();
+              }}
+              className="btn-ghost btn-icon"
+              title="Clear logs"
             >
               <Trash2 size={14} />
             </button>
           )}
+
+          <div className="text-muted ml-1 flex items-center justify-center transition-transform duration-200">
+            {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+          </div>
         </div>
       </div>
 
       {/* Log Feed */}
-      <div className="log-feed font-mono">
-        {logs.length === 0 ? (
-          <div className="text-muted italic py-2">
-            $ Pipeline awaiting movie search query...
-          </div>
-        ) : (
-          logs.map((log) => {
-            let logTypeClass = 'text-secondary';
-            let badgeClass = 'badge-default';
+      {isExpanded && (
+        <div className="log-feed font-mono">
+          {logs.length === 0 ? (
+            <div className="text-muted italic py-2">
+              $ Pipeline awaiting movie search query...
+            </div>
+          ) : (
+            logs.map((log) => {
+              let logTypeClass = 'text-secondary';
+              let badgeClass = 'badge-default';
 
-            if (log.type === 'success') {
-              logTypeClass = 'text-success';
-              badgeClass = 'badge-success';
-            } else if (log.type === 'error') {
-              logTypeClass = 'text-error';
-              badgeClass = 'badge-error';
-            } else if (log.type === 'warning') {
-              logTypeClass = 'text-warning';
-              badgeClass = 'badge-warning';
-            }
+              if (log.type === 'success') {
+                logTypeClass = 'text-success';
+                badgeClass = 'badge-success';
+              } else if (log.type === 'error') {
+                logTypeClass = 'text-error';
+                badgeClass = 'badge-error';
+              } else if (log.type === 'warning') {
+                logTypeClass = 'text-warning';
+                badgeClass = 'badge-warning';
+              }
 
-            return (
-              <div key={log.id} className="log-line">
-                <div className="log-meta">
-                  <span className="log-timestamp text-muted">
-                    {log.timestamp}
-                  </span>
-                  <span className={`log-badge ${badgeClass}`}>
-                    {log.stage}
+              return (
+                <div key={log.id} className="log-line">
+                  <div className="log-meta">
+                    <span className="log-timestamp text-muted">
+                      {log.timestamp}
+                    </span>
+                    <span className={`log-badge ${badgeClass}`}>
+                      {log.stage}
+                    </span>
+                  </div>
+                  <span className={`log-message ${logTypeClass}`}>
+                    {log.message}
                   </span>
                 </div>
-                <span className={`log-message ${logTypeClass}`}>
-                  {log.message}
-                </span>
-              </div>
-            );
-          })
-        )}
-        <div ref={bottomRef} />
-      </div>
+              );
+            })
+          )}
+          <div ref={bottomRef} />
+        </div>
+      )}
 
       <style jsx>{`
         .terminal-container {
@@ -129,6 +146,10 @@ export const LiveConsole: React.FC<LiveConsoleProps> = ({ logs, onClearLogs }) =
         .bg-error { background-color: var(--error); }
         .bg-warning { background-color: var(--warning); }
         .bg-success { background-color: var(--success); }
+
+        .btn-icon {
+          padding: 6px;
+        }
 
         .terminal-title {
           font-size: 0.75rem;

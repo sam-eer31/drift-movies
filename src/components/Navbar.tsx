@@ -11,7 +11,7 @@ export const Navbar: React.FC = () => {
       top: 0,
       zIndex: 50
     }}>
-      <div className="container flex items-center justify-between" style={{ height: '70px' }}>
+      <div className="container mobile-no-pl flex items-center justify-between" style={{ height: '70px' }}>
         {/* Brand Logo */}
         <div className="flex items-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
