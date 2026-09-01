@@ -54,13 +54,14 @@ export async function GET(request: NextRequest) {
           sendEvent('step', { id: 'generator', status: 'running', label: `Resolving Episode ${episodeNumber || ''}` });
           sendLog(`Resolving Episode ${episodeNumber || ''} (checking V-Cloud & alternate mirrors)...`, 'info', 'Episode Extractor');
 
-          let { streams, fileName } = await resolveDirectStreams(episodeUrl, (msg) => {
+          let { streams, fileName, error } = await resolveDirectStreams(episodeUrl, (msg) => {
             sendLog(msg, 'info', 'Token Extractor');
           });
 
           if (!streams || streams.length === 0) {
-            sendLog(`Failed to extract a direct stream. Please try a different quality or episode.`, 'error', 'Token Extractor');
-            sendEvent('error', { message: 'Direct stream extraction failed or timed out. Please try a different package or try again.' });
+            const errMsg = error ? `Extraction failed: ${error}` : 'Direct stream extraction failed or timed out. Please try a different package or try again.';
+            sendLog(errMsg, 'error', 'Token Extractor');
+            sendEvent('error', { message: errMsg });
             controller.close();
             return;
           }
@@ -98,13 +99,14 @@ export async function GET(request: NextRequest) {
             } catch {}
           }
 
-          let { streams, fileName } = await resolveDirectStreams(targetStreamUrls, (msg) => {
+          let { streams, fileName, error } = await resolveDirectStreams(targetStreamUrls, (msg) => {
             sendLog(msg, 'info', 'Token Extractor');
           });
 
           if (!streams || streams.length === 0) {
-            sendLog(`Failed to extract a direct stream. Please try a different quality or episode.`, 'error', 'Token Extractor');
-            sendEvent('error', { message: 'Direct stream extraction failed or timed out. Please try a different package or try again.' });
+            const errMsg = error ? `Extraction failed: ${error}` : 'Direct stream extraction failed or timed out. Please try a different package or try again.';
+            sendLog(errMsg, 'error', 'Token Extractor');
+            sendEvent('error', { message: errMsg });
             controller.close();
             return;
           }

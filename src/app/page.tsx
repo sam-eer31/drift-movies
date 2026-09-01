@@ -195,7 +195,16 @@ export default function HomePage() {
                 setFileSize(parsed.fileSize);
               }
               if (parsed.movie) {
-                setActiveMovie(parsed.movie);
+                setActiveMovie(prev => {
+                  if (!prev) return parsed.movie;
+                  return {
+                    ...prev,
+                    ...parsed.movie,
+                    title: parsed.movie.title || prev.title,
+                    poster: parsed.movie.poster || prev.poster,
+                    source: parsed.movie.source || prev.source
+                  };
+                });
               }
 
               // Set pending extraction URL for the default selected options
