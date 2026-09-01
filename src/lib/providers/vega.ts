@@ -33,36 +33,51 @@ export async function searchVega(activeDomain: string, query: string): Promise<M
   const cleanQuery = query.trim();
   const rawResults: MovieSearchResult[] = [];
 
-  // Try Typesense search endpoint first
-  try {
-    const tsUrl = `${activeDomain}/ts-search.php?q=${encodeURIComponent(cleanQuery)}&page=1`;
-    const jsonStr = await fetchWithHeaders(tsUrl, `${activeDomain}/search.html?q=${encodeURIComponent(cleanQuery)}`, 'application/json, text/plain, */*');
-    const data = JSON.parse(jsonStr);
+  const parseHits = (jsonStr: string) => {
+    try {
+      const data = JSON.parse(jsonStr);
+      if (data && Array.isArray(data.hits) && data.hits.length > 0) {
+        for (const hit of data.hits) {
+          const doc = hit.document || {};
+          if (doc.permalink) {
+            const rawTitle = doc.post_title || '';
+            const cleanTitle = rawTitle.replace(/^Download\s+/i, '').trim();
+            const permalink = doc.permalink.startsWith('http') ? doc.permalink : `${activeDomain}${doc.permalink.startsWith('/') ? '' : '/'}${doc.permalink}`;
+            const poster = doc.post_thumbnail;
+            const isSeries = /\b(Season\s*\d+|S\d+|Complete Series|Web Series|Episodes?)\b/i.test(rawTitle);
 
-    if (data && Array.isArray(data.hits) && data.hits.length > 0) {
-      for (const hit of data.hits) {
-        const doc = hit.document || {};
-        if (doc.permalink) {
-          const rawTitle = doc.post_title || '';
-          const cleanTitle = rawTitle.replace(/^Download\s+/i, '').trim();
-          const permalink = doc.permalink.startsWith('http') ? doc.permalink : `${activeDomain}${doc.permalink.startsWith('/') ? '' : '/'}${doc.permalink}`;
-          const poster = doc.post_thumbnail;
-          const isSeries = /\b(Season\s*\d+|S\d+|Complete Series|Web Series|Episodes?)\b/i.test(rawTitle);
-
-          rawResults.push({
-            title: cleanTitle,
-            url: permalink,
-            poster: poster?.startsWith('http') ? poster : (poster ? `${activeDomain}${poster}` : undefined),
-            year: cleanTitle.match(/\b(19\d\d|20\d\d)\b/)?.[1],
-            source: 'Vega',
-            isSeries
-          });
+            rawResults.push({
+              title: cleanTitle,
+              url: permalink,
+              poster: poster?.startsWith('http') ? poster : (poster ? `${activeDomain}${poster}` : undefined),
+              year: cleanTitle.match(/\b(19\d\d|20\d\d)\b/)?.[1],
+              source: 'Vega',
+              isSeries
+            });
+          }
         }
       }
-    }
+    } catch {}
+  };
+
+  const tsUrl = `${activeDomain}/ts-search.php?q=${encodeURIComponent(cleanQuery)}&page=1`;
+  const referer = `${activeDomain}/search.html?q=${encodeURIComponent(cleanQuery)}`;
+
+  // 1. Try Typesense endpoint: Direct first (0 credits)
+  try {
+    const jsonStr = await fetchWithHeaders(tsUrl, referer, 'application/json, text/plain, */*', false);
+    parseHits(jsonStr);
   } catch {}
 
-  // Fallback to HTML scraping
+  // If direct fetch fails (e.g. Cloudflare datacenter IP block on Vercel), fallback to ZenRows
+  if (rawResults.length === 0) {
+    try {
+      const jsonStr = await fetchWithHeaders(tsUrl, referer, 'application/json, text/plain, */*', true, { jsRender: false, antibot: false });
+      parseHits(jsonStr);
+    } catch {}
+  }
+
+  // 2. Fallback to HTML scraping if Typesense returned no hits
   if (rawResults.length === 0) {
     const searchUrls = [
       `${activeDomain}/search.html?q=${encodeURIComponent(cleanQuery)}`,
@@ -70,11 +85,22 @@ export async function searchVega(activeDomain: string, query: string): Promise<M
     ];
 
     let html = '';
+    // Direct attempt
     for (const url of searchUrls) {
       try {
-        html = await fetchWithHeaders(url, activeDomain);
+        html = await fetchWithHeaders(url, activeDomain, undefined, false);
         if (html.length > 500) break;
       } catch {}
+    }
+
+    // ZenRows fallback attempt
+    if (!html || html.length < 500) {
+      for (const url of searchUrls) {
+        try {
+          html = await fetchWithHeaders(url, activeDomain, undefined, true, { jsRender: false, antibot: false });
+          if (html.length > 500) break;
+        } catch {}
+      }
     }
 
     if (html) {

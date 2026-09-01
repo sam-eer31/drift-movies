@@ -21,7 +21,14 @@ export async function getMovieQualities(
   onLog?: (msg: string) => void
 ): Promise<{ qualities: QualityOption[]; isSeries: boolean; seasons: string[] }> {
   onLog?.(`Fetching all available quality packages & seasons from details page...`);
-  const html = await fetchWithHeaders(movieUrl);
+  let html = '';
+  try {
+    html = await fetchWithHeaders(movieUrl, undefined, undefined, false);
+    if (!html || html.length < 500) throw new Error('Short response');
+  } catch {
+    // If direct fetch fails (e.g. Cloudflare datacenter IP block on Vercel), fallback to ZenRows
+    html = await fetchWithHeaders(movieUrl, undefined, undefined, true, { jsRender: false, antibot: false });
+  }
 
   const titleMatch = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i) || html.match(/<title>([\s\S]*?)<\/title>/i);
   const mainTitle = titleMatch ? titleMatch[1] : '';
